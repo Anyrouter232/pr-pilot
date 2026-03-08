@@ -1,4 +1,4 @@
-import { OpenAIClient } from '../src/openai';
+import { OpenAIProvider } from '../../src/providers/openai';
 
 const mockCreate = jest.fn();
 
@@ -18,9 +18,14 @@ jest.mock('@actions/core', () => ({
   warning: jest.fn(),
 }));
 
-describe('OpenAIClient', () => {
+describe('OpenAIProvider', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('should have name "openai"', () => {
+    const provider = new OpenAIProvider('fake-key', 'gpt-5.4');
+    expect(provider.name).toBe('openai');
   });
 
   it('should parse a valid JSON response', async () => {
@@ -36,15 +41,44 @@ describe('OpenAIClient', () => {
           },
         },
       ],
-      usage: { total_tokens: 500 },
+      usage: { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-5.4');
-    const result = await client.reviewDiff('system prompt', 'user prompt');
+    const provider = new OpenAIProvider('fake-key', 'gpt-5.4');
+    const result = await provider.reviewDiff('system prompt', 'user prompt');
 
     expect(result.summary).toBe('Looks good overall.');
     expect(result.overallSeverity).toBe('approve');
     expect(result.files).toEqual([]);
+  });
+
+  it('should track token usage', async () => {
+    mockCreate.mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              summary: 'OK',
+              files: [],
+              overallSeverity: 'approve',
+            }),
+          },
+        },
+      ],
+      usage: { prompt_tokens: 200, completion_tokens: 100, total_tokens: 300 },
+    });
+
+    const provider = new OpenAIProvider('fake-key', 'gpt-5.4');
+    expect(provider.getLastUsage()).toBeNull();
+
+    await provider.reviewDiff('system', 'user');
+
+    const usage = provider.getLastUsage();
+    expect(usage).toEqual({
+      promptTokens: 200,
+      completionTokens: 100,
+      totalTokens: 300,
+    });
   });
 
   it('should handle response with file comments', async () => {
@@ -69,11 +103,11 @@ describe('OpenAIClient', () => {
           },
         },
       ],
-      usage: { total_tokens: 1200 },
+      usage: { prompt_tokens: 500, completion_tokens: 200, total_tokens: 700 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-5.4');
-    const result = await client.reviewDiff('system', 'user');
+    const provider = new OpenAIProvider('fake-key', 'gpt-5.4');
+    const result = await provider.reviewDiff('system', 'user');
 
     expect(result.files).toHaveLength(1);
     expect(result.files[0].comments).toHaveLength(2);
@@ -83,21 +117,21 @@ describe('OpenAIClient', () => {
   it('should throw on empty response', async () => {
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: null } }],
-      usage: { total_tokens: 0 },
+      usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-5.4');
-    await expect(client.reviewDiff('system', 'user')).rejects.toThrow('empty response');
+    const provider = new OpenAIProvider('fake-key', 'gpt-5.4');
+    await expect(provider.reviewDiff('system', 'user')).rejects.toThrow('empty response');
   });
 
   it('should throw on invalid JSON', async () => {
     mockCreate.mockResolvedValue({
       choices: [{ message: { content: 'not json at all' } }],
-      usage: { total_tokens: 100 },
+      usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-5.4');
-    await expect(client.reviewDiff('system', 'user')).rejects.toThrow('not valid JSON');
+    const provider = new OpenAIProvider('fake-key', 'gpt-5.4');
+    await expect(provider.reviewDiff('system', 'user')).rejects.toThrow('not valid JSON');
   });
 
   it('should validate and fix malformed response fields', async () => {
@@ -123,15 +157,14 @@ describe('OpenAIClient', () => {
           },
         },
       ],
-      usage: { total_tokens: 300 },
+      usage: { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-5.4');
-    const result = await client.reviewDiff('system', 'user');
+    const provider = new OpenAIProvider('fake-key', 'gpt-5.4');
+    const result = await provider.reviewDiff('system', 'user');
 
     expect(result.summary).toBe('No summary provided.');
     expect(result.overallSeverity).toBe('comment');
-    // Only the comment with valid line (5) and valid string comment should remain
     expect(result.files[0].comments).toHaveLength(1);
     expect(result.files[0].comments[0].line).toBe(5);
   });

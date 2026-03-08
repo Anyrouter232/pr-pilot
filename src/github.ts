@@ -1,7 +1,8 @@
 import * as github from '@actions/github';
 import * as core from '@actions/core';
-import { PRContext, PRFile, ReviewComment, ReviewResult } from './types';
+import { PRContext, PRFile, ReviewComment, ReviewResult, IncrementalContext } from './types';
 import { minimatch } from 'minimatch';
+import { buildShaMarker } from './incremental';
 
 type Octokit = ReturnType<typeof github.getOctokit>;
 
@@ -37,6 +38,14 @@ export class GitHubClient {
     return this.context;
   }
 
+  getOctokit(): Octokit {
+    return this.octokit;
+  }
+
+  getEventAction(): string {
+    return (github.context.payload.action as string) || '';
+  }
+
   async getChangedFiles(excludePatterns: string[], maxFiles: number): Promise<PRFile[]> {
     const { owner, repo, pullNumber } = this.context;
 
@@ -69,7 +78,7 @@ export class GitHubClient {
     }));
   }
 
-  async postReview(result: ReviewResult): Promise<number> {
+  async postReview(result: ReviewResult, incrementalCtx?: IncrementalContext): Promise<number> {
     const { owner, repo, pullNumber } = this.context;
 
     const apiComments = result.comments.map((c) => ({
@@ -86,7 +95,7 @@ export class GitHubClient {
       event = 'REQUEST_CHANGES';
     }
 
-    const reviewBody = this.buildReviewBody(result);
+    const reviewBody = this.buildReviewBody(result, incrementalCtx);
 
     const { data: review } = await this.octokit.rest.pulls.createReview({
       owner,
@@ -111,16 +120,30 @@ export class GitHubClient {
     return `${emoji} **${comment.severity.toUpperCase()}**\n\n${comment.body}`;
   }
 
-  private buildReviewBody(result: ReviewResult): string {
-    return [
-      '## PR Pilot Review',
-      '',
-      result.summary,
-      '',
-      `**Issues found:** ${result.issuesCount}`,
+  private buildReviewBody(result: ReviewResult, incrementalCtx?: IncrementalContext): string {
+    const lines: string[] = ['## PR Pilot Review', ''];
+
+    if (incrementalCtx?.isIncremental && incrementalCtx.commitRange) {
+      lines.push(
+        `> **Incremental review** of new changes (\`${incrementalCtx.previousSha!.substring(0, 7)}..${incrementalCtx.currentSha.substring(0, 7)}\`)`,
+        ''
+      );
+    }
+
+    lines.push(result.summary, '', `**Issues found:** ${result.issuesCount}`);
+
+    if (result.analyticsReport) {
+      lines.push(result.analyticsReport);
+    }
+
+    lines.push(
       '',
       '---',
-      '*Automated review by [PR Pilot](https://github.com/Anyrouter232/pr-pilot) powered by OpenAI*',
-    ].join('\n');
+      '*Automated review by [PR Pilot](https://github.com/Anyrouter232/pr-pilot) powered by AI*',
+      '',
+      buildShaMarker(this.context.headSha)
+    );
+
+    return lines.join('\n');
   }
 }

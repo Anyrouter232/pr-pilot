@@ -1,1 +1,1 @@
-{"version":3,"file":"","sourceRoot":"","sources":["file:///Users/zahir/AI-Slop-detector/src/config.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,YAAY,EAAE,MAAM,SAAS,CAAC;AAEvC,wBAAgB,SAAS,IAAI,YAAY,CAmBxC"}
+{"version":3,"file":"","sourceRoot":"","sources":["file:///Users/zahir/AI-Slop-detector/src/config.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,YAAY,EAAgB,MAAM,SAAS,CAAC;AAErD,wBAAgB,SAAS,IAAI,YAAY,CA2BxC;AAkBD,wBAAgB,aAAa,CAAC,MAAM,EAAE,YAAY,GAAG,MAAM,CAO1D"}

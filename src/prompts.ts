@@ -1,6 +1,6 @@
-import { ActionConfig, PRContext } from './types';
+import { ResolvedConfig, PRContext, FileGroup } from './types';
 
-export function getSystemPrompt(config: ActionConfig): string {
+export function getSystemPrompt(config: ResolvedConfig): string {
   const levelInstructions: Record<string, string> = {
     concise:
       'Be brief. Only flag genuine bugs, security issues, or clear anti-patterns. Skip style nitpicks.',
@@ -10,7 +10,7 @@ export function getSystemPrompt(config: ActionConfig): string {
       'Provide a comprehensive review. Cover bugs, security, performance, readability, maintainability, naming conventions, documentation gaps, test coverage suggestions, and edge cases.',
   };
 
-  return `You are PR Pilot, an expert code reviewer. You review pull request diffs and provide actionable, constructive feedback.
+  let prompt = `You are PR Pilot, an expert code reviewer. You review pull request diffs and provide actionable, constructive feedback.
 
 ## Your Guidelines
 - Review the code diff provided and identify issues.
@@ -19,9 +19,28 @@ export function getSystemPrompt(config: ActionConfig): string {
 - Be constructive and explain WHY something is an issue, not just WHAT is wrong.
 - If the code looks good, say so. Don't invent issues.
 - Focus on the CHANGED lines (lines starting with +), not removed lines.
-- ${levelInstructions[config.reviewLevel]}
+- ${levelInstructions[config.reviewLevel]}`;
 
-${config.customPrompt ? `## Additional Instructions\n${config.customPrompt}` : ''}
+  if (config.customPrompt) {
+    prompt += `\n\n## Additional Instructions\n${config.customPrompt}`;
+  }
+
+  if (config.reviewRules.length > 0) {
+    prompt +=
+      '\n\n## Project-Specific Rules\nThe following rules are defined by the project maintainers:';
+    for (const rule of config.reviewRules) {
+      prompt += `\n- ${rule}`;
+    }
+  }
+
+  if (Object.keys(config.languageHints).length > 0) {
+    prompt += '\n\n## Language Hints';
+    for (const [ext, lang] of Object.entries(config.languageHints)) {
+      prompt += `\n- Files ending in \`${ext}\` are written in ${lang}`;
+    }
+  }
+
+  prompt += `
 
 ## Response Format
 Respond with valid JSON matching this schema:
@@ -45,12 +64,31 @@ Respond with valid JSON matching this schema:
 
 If there are no issues, return an empty comments array and set overallSeverity to "approve".
 IMPORTANT: Return ONLY valid JSON. No markdown code fences, no extra text.`;
+
+  return prompt;
 }
 
 export function getUserPrompt(prContext: PRContext, annotatedDiffs: string[]): string {
   return `## Pull Request: ${prContext.title}
 
 ${prContext.body ? `### Description\n${prContext.body}\n` : ''}
+
+### Code Changes
+
+${annotatedDiffs.join('\n\n---\n\n')}`;
+}
+
+export function getUserPromptForGroup(
+  prContext: PRContext,
+  group: FileGroup,
+  annotatedDiffs: string[]
+): string {
+  return `## Pull Request: ${prContext.title}
+
+${prContext.body ? `### Description\n${prContext.body}\n` : ''}
+
+### File Group: ${group.name}
+${group.context}
 
 ### Code Changes
 

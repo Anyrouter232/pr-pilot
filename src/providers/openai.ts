@@ -1,23 +1,20 @@
 import OpenAI from 'openai';
 import * as core from '@actions/core';
-import { OpenAIFileReview } from './types';
+import { AIProviderUsage } from '../types';
+import { AIProvider, AIReviewResponse } from './provider';
 
-export interface OpenAIReviewResponse {
-  summary: string;
-  files: OpenAIFileReview[];
-  overallSeverity: 'approve' | 'request_changes' | 'comment';
-}
-
-export class OpenAIClient {
+export class OpenAIProvider implements AIProvider {
+  readonly name = 'openai';
   private client: OpenAI;
   private model: string;
+  private lastUsage: AIProviderUsage | null = null;
 
   constructor(apiKey: string, model: string) {
     this.client = new OpenAI({ apiKey });
     this.model = model;
   }
 
-  async reviewDiff(systemPrompt: string, userPrompt: string): Promise<OpenAIReviewResponse> {
+  async reviewDiff(systemPrompt: string, userPrompt: string): Promise<AIReviewResponse> {
     core.info(`Sending review request to OpenAI (model: ${this.model})...`);
 
     const response = await this.client.chat.completions.create({
@@ -36,20 +33,30 @@ export class OpenAIClient {
       throw new Error('OpenAI returned an empty response.');
     }
 
+    this.lastUsage = {
+      promptTokens: response.usage?.prompt_tokens ?? 0,
+      completionTokens: response.usage?.completion_tokens ?? 0,
+      totalTokens: response.usage?.total_tokens ?? 0,
+    };
+
     core.info(
-      `OpenAI response received. Tokens used: ${response.usage?.total_tokens ?? 'unknown'}`
+      `OpenAI response received. Tokens used: ${this.lastUsage.totalTokens.toLocaleString()}`
     );
 
     try {
-      const parsed = JSON.parse(content) as OpenAIReviewResponse;
+      const parsed = JSON.parse(content) as AIReviewResponse;
       return this.validateResponse(parsed);
-    } catch (error) {
+    } catch {
       core.error(`Failed to parse OpenAI response as JSON: ${content.substring(0, 500)}`);
       throw new Error('OpenAI response was not valid JSON. This may be a model issue.');
     }
   }
 
-  private validateResponse(response: OpenAIReviewResponse): OpenAIReviewResponse {
+  getLastUsage(): AIProviderUsage | null {
+    return this.lastUsage;
+  }
+
+  private validateResponse(response: AIReviewResponse): AIReviewResponse {
     if (!response.summary || typeof response.summary !== 'string') {
       response.summary = 'No summary provided.';
     }

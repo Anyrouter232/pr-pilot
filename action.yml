@@ -1,5 +1,5 @@
 name: 'PR Pilot - AI Code Review'
-description: 'Automatically review pull requests using OpenAI. Get actionable feedback on every PR.'
+description: 'Automatically review pull requests using AI. Supports OpenAI, Anthropic, and Google Gemini.'
 author: 'Anyrouter232'
 
 branding:
@@ -11,13 +11,26 @@ inputs:
     description: 'GitHub token for API access. Defaults to the automatic GITHUB_TOKEN.'
     required: false
     default: ${{ github.token }}
-  openai-api-key:
-    description: 'Your OpenAI API key.'
-    required: true
-  model:
-    description: 'OpenAI model to use for review.'
+  provider:
+    description: 'AI provider: "openai", "anthropic", or "gemini".'
     required: false
-    default: 'gpt-5.4'
+    default: 'openai'
+  openai-api-key:
+    description: 'OpenAI API key (required if provider is "openai").'
+    required: false
+    default: ''
+  anthropic-api-key:
+    description: 'Anthropic API key (required if provider is "anthropic").'
+    required: false
+    default: ''
+  gemini-api-key:
+    description: 'Google Gemini API key (required if provider is "gemini").'
+    required: false
+    default: ''
+  model:
+    description: 'AI model to use. Defaults vary by provider (gpt-5.4 / claude-sonnet-4-6 / gemini-2.0-flash).'
+    required: false
+    default: ''
   max-files:
     description: 'Maximum number of files to review. Set to 0 for unlimited.'
     required: false
@@ -48,6 +61,14 @@ outputs:
     description: 'The ID of the review comment posted.'
   issues-found:
     description: 'Number of issues found during review.'
+  files-reviewed:
+    description: 'Number of files reviewed.'
+  tokens-used:
+    description: 'Total tokens used by the AI provider.'
+  review-duration-ms:
+    description: 'Review duration in milliseconds.'
+  provider:
+    description: 'AI provider used for the review.'
 
 runs:
   using: 'node20'

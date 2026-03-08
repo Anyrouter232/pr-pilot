@@ -1,2 +1,6 @@
-import { ActionConfig, ReviewResult } from './types';
-export declare function runReview(config: ActionConfig): Promise<ReviewResult>;
+import { ResolvedConfig, ReviewResult, IncrementalContext } from './types';
+import { GitHubClient } from './github';
+export declare function runReview(config: ResolvedConfig, ghClient: GitHubClient): Promise<{
+    result: ReviewResult;
+    incrementalCtx?: IncrementalContext;
+}>;
