@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run bundle
+
+      - name: Update major version tag
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          MAJOR=$(echo "$TAG" | grep -oP '^v\d+')
+          git tag -f "$MAJOR" "$TAG"
+          git push origin "$MAJOR" --force
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

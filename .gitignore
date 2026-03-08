@@ -1,0 +1,17 @@
+node_modules/
+lib/
+coverage/
+*.js.map
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local

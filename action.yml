@@ -1,0 +1,54 @@
+name: 'PR Pilot - AI Code Review'
+description: 'Automatically review pull requests using OpenAI. Get actionable feedback on every PR.'
+author: 'Anyrouter232'
+
+branding:
+  icon: 'eye'
+  color: 'blue'
+
+inputs:
+  github-token:
+    description: 'GitHub token for API access. Defaults to the automatic GITHUB_TOKEN.'
+    required: false
+    default: ${{ github.token }}
+  openai-api-key:
+    description: 'Your OpenAI API key.'
+    required: true
+  model:
+    description: 'OpenAI model to use for review.'
+    required: false
+    default: 'gpt-4o'
+  max-files:
+    description: 'Maximum number of files to review. Set to 0 for unlimited.'
+    required: false
+    default: '20'
+  exclude-patterns:
+    description: 'Glob patterns of files to exclude (comma-separated). E.g., "*.lock,dist/**"'
+    required: false
+    default: '*.lock,package-lock.json,yarn.lock,dist/**,*.min.js,*.min.css'
+  review-level:
+    description: 'Review thoroughness: "concise", "standard", or "thorough".'
+    required: false
+    default: 'standard'
+  custom-prompt:
+    description: 'Additional instructions to include in the review prompt.'
+    required: false
+    default: ''
+  post-summary:
+    description: 'Whether to post a summary comment on the PR.'
+    required: false
+    default: 'true'
+  fail-on-issues:
+    description: 'Whether to fail the action if critical issues are found.'
+    required: false
+    default: 'false'
+
+outputs:
+  review-comment-id:
+    description: 'The ID of the review comment posted.'
+  issues-found:
+    description: 'Number of issues found during review.'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
