@@ -17,7 +17,7 @@ inputs:
   model:
     description: 'OpenAI model to use for review.'
     required: false
-    default: 'gpt-4o'
+    default: 'gpt-5.4'
   max-files:
     description: 'Maximum number of files to review. Set to 0 for unlimited.'
     required: false

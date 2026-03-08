@@ -48,7 +48,7 @@ That's it. Every PR will now get an AI-powered code review.
 |-------|-------------|---------|
 | `github-token` | GitHub token for API access | `${{ github.token }}` |
 | `openai-api-key` | Your OpenAI API key | **required** |
-| `model` | OpenAI model to use | `gpt-4o` |
+| `model` | OpenAI model to use | `gpt-5.4` |
 | `max-files` | Max files to review (0 = unlimited) | `20` |
 | `exclude-patterns` | Comma-separated glob patterns to skip | `*.lock,package-lock.json,...` |
 | `review-level` | Review depth: `concise`, `standard`, `thorough` | `standard` |
@@ -62,7 +62,7 @@ That's it. Every PR will now get an AI-powered code review.
 - uses: Anyrouter232/pr-pilot@v1
   with:
     openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-    model: gpt-4o
+    model: gpt-5.4
     review-level: thorough
     max-files: 30
     exclude-patterns: '*.lock,dist/**,*.generated.ts,docs/**'

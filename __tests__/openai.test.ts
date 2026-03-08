@@ -39,7 +39,7 @@ describe('OpenAIClient', () => {
       usage: { total_tokens: 500 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-4o');
+    const client = new OpenAIClient('fake-key', 'gpt-5.4');
     const result = await client.reviewDiff('system prompt', 'user prompt');
 
     expect(result.summary).toBe('Looks good overall.');
@@ -72,7 +72,7 @@ describe('OpenAIClient', () => {
       usage: { total_tokens: 1200 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-4o');
+    const client = new OpenAIClient('fake-key', 'gpt-5.4');
     const result = await client.reviewDiff('system', 'user');
 
     expect(result.files).toHaveLength(1);
@@ -86,7 +86,7 @@ describe('OpenAIClient', () => {
       usage: { total_tokens: 0 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-4o');
+    const client = new OpenAIClient('fake-key', 'gpt-5.4');
     await expect(client.reviewDiff('system', 'user')).rejects.toThrow('empty response');
   });
 
@@ -96,7 +96,7 @@ describe('OpenAIClient', () => {
       usage: { total_tokens: 100 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-4o');
+    const client = new OpenAIClient('fake-key', 'gpt-5.4');
     await expect(client.reviewDiff('system', 'user')).rejects.toThrow('not valid JSON');
   });
 
@@ -126,7 +126,7 @@ describe('OpenAIClient', () => {
       usage: { total_tokens: 300 },
     });
 
-    const client = new OpenAIClient('fake-key', 'gpt-4o');
+    const client = new OpenAIClient('fake-key', 'gpt-5.4');
     const result = await client.reviewDiff('system', 'user');
 
     expect(result.summary).toBe('No summary provided.');

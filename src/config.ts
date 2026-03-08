@@ -7,7 +7,7 @@ export function getConfig(): ActionConfig {
   return {
     githubToken: core.getInput('github-token', { required: true }),
     openaiApiKey: core.getInput('openai-api-key', { required: true }),
-    model: core.getInput('model') || 'gpt-4o',
+    model: core.getInput('model') || 'gpt-5.4',
     maxFiles: parseInt(core.getInput('max-files') || '20', 10),
     excludePatterns: excludeRaw
       ? excludeRaw
