@@ -1,6 +1,5 @@
 # PR Pilot
 
-[![CI](https://github.com/Anyrouter232/pr-pilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Anyrouter232/pr-pilot/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 AI-powered pull request reviewer using OpenAI. Get instant, actionable code review feedback on every PR.
